@@ -1,0 +1,56 @@
+                            1. Prim's Algorithm in Python
+
+n, m = map(int, input().split())
+
+cost = [[999] * n for _ in range(n)]
+
+for _ in range(m):
+    u, v, w = map(int, input().split())
+    cost[u][v] = cost[v][u] = w
+
+visited = [False] * n
+visited[0] = True
+total = 0
+
+for _ in range(n - 1):
+    mn = 999
+    a = b = -1
+
+    for i in range(n):
+        if visited[i]:
+            for j in range(n):
+                if not visited[j] and cost[i][j] < mn:
+                    mn = cost[i][j]
+                    a, b = i, j
+
+    visited[b] = True
+    total += mn
+
+print(total)
+
+
+                              2.Kruskal's Algorithm using Union-Find
+
+n, m = map(int, input().split())
+
+edges = []
+for _ in range(m):
+    u, v, w = map(int, input().split())
+    edges.append((u, v, w))
+
+parent = list(range(n))
+
+def find(x):
+    while parent[x] != x:
+        x = parent[x]
+    return x
+
+cost = 0
+
+for u, v, w in sorted(edges, key=lambda x: x[2]):
+    ru, rv = find(u), find(v)
+    if ru != rv:
+        parent[ru] = rv
+        cost += w
+
+print("MST cost is", cost)
