@@ -1,0 +1,254 @@
+# ============================================================
+# Q1. JOB SCHEDULING USING BACKTRACKING / CSP (NP-HARD PROBLEM)
+# ============================================================
+#
+# THEORY:
+# -------
+# Problem Statement:
+# Assign jobs to employees such that:
+#   1. Every job is assigned exactly once.
+#   2. An employee cannot perform more than one job at the same time.
+#   3. Job completion must satisfy deadline constraints.
+#   4. Employee skills/resources must match job requirements.
+#
+# Why NP-Hard?
+# ------------
+# Job scheduling belongs to a class of combinatorial optimization
+# problems. As the number of jobs and employees increases,
+# the number of possible assignments grows exponentially.
+#
+# CSP (Constraint Satisfaction Problem) Formulation:
+# --------------------------------------------------
+# Variables   : Jobs
+# Domain      : Eligible employees for each job
+# Constraints :
+#    - Skill compatibility
+#    - Deadline feasibility
+#    - Resource availability
+#    - One employee handles at most one job
+#
+# Backtracking Approach:
+# ----------------------
+# 1. Assign a job to a valid employee.
+# 2. Check constraints.
+# 3. Recursively assign remaining jobs.
+# 4. If a constraint fails, undo assignment (backtrack).
+#
+# Pruning:
+# --------
+# Before recursion, reject assignments that violate:
+#    - Employee availability
+#    - Deadline constraints
+#    - Skill requirements
+#
+# Time Complexity:
+# ----------------
+# Worst Case: O(m^n)
+# n = jobs
+# m = employees
+#
+# ============================================================
+
+jobs = {
+    "J1": {"deadline": 5, "required_skill": "Python"},
+    "J2": {"deadline": 3, "required_skill": "Java"},
+    "J3": {"deadline": 4, "required_skill": "Python"},
+    "J4": {"deadline": 6, "required_skill": "SQL"}
+}
+
+employees = {
+    "E1": {"skills": ["Python", "SQL"], "available_time": 4},
+    "E2": {"skills": ["Java"], "available_time": 2},
+    "E3": {"skills": ["Python", "Java"], "available_time": 3},
+    "E4": {"skills": ["SQL"], "available_time": 5}
+}
+
+assignment = {}
+used_employees = set()
+
+
+def is_valid(job, employee):
+    """
+    Constraint Checking
+
+    1. Employee must possess required skill.
+    2. Employee should not already be assigned.
+    3. Available time must satisfy deadline.
+    """
+
+    required_skill = jobs[job]["required_skill"]
+    deadline = jobs[job]["deadline"]
+
+    if employee in used_employees:
+        return False
+
+    if required_skill not in employees[employee]["skills"]:
+        return False
+
+    if employees[employee]["available_time"] > deadline:
+        return False
+
+    return True
+
+
+def backtrack(job_list, index=0):
+    """
+    Recursive Backtracking Solver
+    """
+
+    if index == len(job_list):
+        return True
+
+    current_job = job_list[index]
+
+    for employee in employees:
+
+        if is_valid(current_job, employee):
+
+            assignment[current_job] = employee
+            used_employees.add(employee)
+
+            if backtrack(job_list, index + 1):
+                return True
+
+            # Backtrack
+            del assignment[current_job]
+            used_employees.remove(employee)
+
+    return False
+
+
+job_order = list(jobs.keys())
+
+if backtrack(job_order):
+    print("Feasible Job Assignment Found:\n")
+    for job, emp in assignment.items():
+        print(f"{job} --> {emp}")
+else:
+    print("No feasible schedule exists.")
+
+
+# ============================================================
+# Q2. EXAM TIMETABLING USING GRAPH COLORING + BACKTRACKING
+# ============================================================
+#
+# THEORY:
+# -------
+# Problem Statement:
+# Schedule exams so that:
+#
+#   1. No student has overlapping exams.
+#   2. Limited time slots are efficiently utilized.
+#   3. Room capacity constraints are respected.
+#
+# Graph Coloring Model:
+# ---------------------
+# Each Exam = Vertex
+#
+# Edge between Exam A and Exam B:
+#   If at least one student is enrolled in both exams.
+#
+# Goal:
+# -----
+# Assign a color (time slot) to every vertex such that
+# adjacent vertices never share the same color.
+#
+# This is exactly the Graph Coloring Problem,
+# which is NP-Complete.
+#
+# CSP Formulation:
+# ----------------
+# Variables : Exams
+# Domain    : Available time slots
+# Constraints:
+#     Adjacent exams must have different slots.
+#
+# Backtracking:
+# -------------
+# 1. Assign a slot to an exam.
+# 2. Verify neighboring exams.
+# 3. Continue recursively.
+# 4. Backtrack when conflict occurs.
+#
+# Pruning:
+# --------
+# Reject any color assignment that immediately creates
+# a conflict with an already-colored neighboring exam.
+#
+# Time Complexity:
+# ----------------
+# O(k^n)
+#
+# n = exams
+# k = time slots
+#
+# ============================================================
+
+# Conflict Graph
+#
+# E1 conflicts with E2 and E3
+# E2 conflicts with E1 and E4
+# E3 conflicts with E1 and E4
+# E4 conflicts with E2 and E3
+
+graph = {
+    "E1": ["E2", "E3"],
+    "E2": ["E1", "E4"],
+    "E3": ["E1", "E4"],
+    "E4": ["E2", "E3"]
+}
+
+# Available time slots
+time_slots = ["Slot1", "Slot2", "Slot3"]
+
+schedule = {}
+
+
+def is_safe(exam, slot):
+    """
+    Check graph-coloring constraint.
+
+    Adjacent exams cannot share
+    the same time slot.
+    """
+
+    for neighbor in graph[exam]:
+        if neighbor in schedule and schedule[neighbor] == slot:
+            return False
+
+    return True
+
+
+def color_exam(exams, index=0):
+    """
+    Recursive Graph Coloring
+    """
+
+    if index == len(exams):
+        return True
+
+    exam = exams[index]
+
+    for slot in time_slots:
+
+        if is_safe(exam, slot):
+
+            schedule[exam] = slot
+
+            if color_exam(exams, index + 1):
+                return True
+
+            # Backtrack
+            del schedule[exam]
+
+    return False
+
+
+exam_list = list(graph.keys())
+
+if color_exam(exam_list):
+    print("\nExam Timetable:\n")
+    for exam, slot in schedule.items():
+        print(f"{exam} --> {slot}")
+else:
+    print("No valid timetable possible.")
